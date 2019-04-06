@@ -1,4 +1,4 @@
-import helperFunctions as hp
+import sys
 
 sample_input = ['5',
                 '15342',
@@ -7,8 +7,20 @@ sample_input = ['5',
                 '444',
                 '100104']
 
+def write_output(t, result):
+    print ('Case #%s: %s' % (t, result))
+    sys.stdout.flush()
+
 def solve(N):
-    return N
+    aList = list(N)
+    bList = ['0' for i in aList]
+    for i in range(0, len(aList)):
+        if aList[i] == '4':
+            aList[i] = '3'
+            bList[i] = '1'
+    a = int(''.join(aList))
+    b = int(''.join(bList))
+    return ' '.join([str(a), str(b)])
 
 def run(mode):
 
@@ -24,10 +36,10 @@ def run(mode):
     for t in range(1, T+1):
         
         if mode == 'dev':  
-            N = int(sample_input[t]) 
+            N = sample_input[t]
         elif mode == 'prod':
-            N = int(input()) 
+            N = input()
 
-        hp.write_output(t, solve(N))
+        write_output(t, solve(N))
 
 run('dev')

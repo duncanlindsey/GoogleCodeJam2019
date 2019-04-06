@@ -15,7 +15,3 @@ def IsApproximatelyEqual(x, y, epsilon = 1e-6):
 
     # Check relative precision.
     return (-epsilon <= (x - y) / x <= epsilon or -epsilon <= (x - y) / y <= epsilon)
-
-def write_output(t, result):
-    print ('Case #%s: %s' % (t, result))
-    sys.stdout.flush()
