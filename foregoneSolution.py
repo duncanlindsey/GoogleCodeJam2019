@@ -7,6 +7,9 @@ sample_input = ['5',
                 '444',
                 '100104']
 
+def solve(N):
+    return N
+
 def run(mode):
 
     #We collect the first input line consisting of a single integer = T, the total number of test cases
@@ -19,11 +22,12 @@ def run(mode):
      
     #We loop through each test case
     for t in range(1, T+1):
+        
+        if mode == 'dev':  
+            N = int(sample_input[t]) 
+        elif mode == 'prod':
+            N = int(input()) 
 
-        N = int(sample_input[int(2*t)-1]) 
-        V = [int(v) for v in sample_input[int(2*t)].split(' ')] 
+        hp.write_output(t, solve(N))
 
-        #N = int(input()) 
-        #V = [int(v) for v in input().split(' ')] 
-
-        write_output(t, solve(V))
+run('dev')
