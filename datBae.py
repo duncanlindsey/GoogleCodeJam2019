@@ -9,18 +9,17 @@ def read_response():
 
 def first_bucket_size(N, B):
     #Calculate optimum first bucket size from choices. 16 guarantees completion within 5 steps.
-    sizeList = [2,4,8,16]
+    bSize = 2
+    sizeList = [4,8,16]
     for size in sizeList:
-        if B < size < N:
+        if size < N:
+            if N / size > 2 and size > B:
+                bSize = size
+                break
             bSize = size
     return bSize
-    
-def next_bucket_size(N, prevSpec): #RETIRE?
-    #Set bucket size to half the previously used bucket size
-    prevBSize = prevSpec[0][0]
-    return int(prevBSize/2)
 
-def bucket_spec(N, bSize):
+def build_spec(N, bSize, prevSpec):
     #Build the bucket spec for the next query. If there is a remainder, add an odd sized bucket on the end.
     spec = [[bSize, bSize] for i in range(int(N/bSize))]
     if N % bSize != 0:
@@ -37,20 +36,61 @@ def build_query(N, spec):
     return query
 
 def check_spec(N, spec):
-    bSize = spec[0][0]
-    if len(spec) == N and bSize == 1:
-        return True
+    maxSize = max([i[0] for i in spec])
+    if len(spec) == N and maxSize == 1:
+        return 1
     else:
-        return bSize
+        return maxSize
 
-def process(N, spec, prevSpec):
-    #resList = list(response)
-    #for i in range(len(bSizeList)):
+def process(response, spec, prevSpec):
+    resList = [int(i) for i in list(response)]
 
+    #Split the response into buckets according to known response numbers from previous run
+    #First run will have N-B values (1 segment)
+    bucketList = []
+    for parent in prevSpec:
+        signals = parent[2]
+        if signals == 0:
+            bucket = []
+        if len(resList) == signals:
+            bucket = resList
+            resList = []
+        else:
+            bucket = resList[:signals]
+            resList = resList[signals:]
+        bucketList.append(bucket)
 
-    pass
+    #Walk stepwise through buckets updating the spec with working machines if identified
+    counter = 0
+    for bucket in bucketList:
+        counterStart = counter
+        code = (1,0)
+        if len(bucket) == 0:
+            counter += 2 #Skip 2 new buckets.
+        else:
+            for value in bucket:
+                if value == code[counter % 2]:
+                    spec[counter][1] -= 1
+                else:
+                    counter += 1
+                    spec[counter][1] -= 1
+            if counter < counterStart + 2:
+                counter = counterStart + 2
 
-def run(mode):
+    #Append signals (working machines) to each spec
+    for i in range(len(spec)):
+        spec[i] = [spec[i][0], spec[i][1], spec[i][0]-spec[i][1]]
+    
+    return spec
+
+def build_result(N, finalSpec):
+    results = []
+    for i in range(len(finalSpec)):
+        if finalSpec[i][1] == 1:
+            results.append(i)
+    return ' '.join([str(i) for i in results])
+
+def run():
 
     #We collect the first input line consisting of a single integer = T, the total number of test cases
     T = int(input()) 
@@ -58,16 +98,37 @@ def run(mode):
     #We loop through each test case
     for t in range(1, T+1):
 
-        N, B, F = list(input()) #Retrieve test hyperparameters
-
-        nodes = [i for i in range(N)]
-        
-        count = 1 #To check how many tests we have made
+        N, B, F = [int(i) for i in list(input().split(' '))] #Retrieve test hyperparameters
+        runSize = first_bucket_size(N, B)
+        runPrevSpec = [[N, B, int(N-B)]]
+        runResult = ''
         solved = False
 
-        #while count <= F:
+        while not solved:
             
-            #results, query = solve(N, B, F, )
-            #write_query(solve(N, B, F))
+            runSpec = build_spec(N, runSize, runPrevSpec)
+            runQuery = build_query(N, runSpec)
 
-#run('dev')
+            print (runQuery)
+            response = input()
+            if int(response) == -1: #Exit the program if a failed.
+                break
+
+            runSpec = process(response, runSpec, runPrevSpec)
+            runCheck = check_spec(N, runSpec)
+            if runCheck == 1:
+                runResult = build_result(N, runSpec)
+                solved = True
+            else:
+                runSize = int(runCheck/2)
+                runPrevSpec = runSpec
+
+        if solved:
+            write_output(runResult)
+            success = int(input())
+            if success == -1: #exit code if test failed
+                break
+        else:
+            break #To extend the break from within the while
+
+run()
